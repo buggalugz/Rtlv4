@@ -1,39 +1,17 @@
-name: Build RTL-SDR V4
-
-on:
-  workflow_dispatch:
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    container:
-      image: alpine:3.18
-
-    steps:
-    - name: Install Build Dependencies
-      run: apk update && apk add git cmake make gcc g++ musl-dev libusb-dev
-
-    - name: Clone Official RTL-SDR Blog V4 Source
-      run: git clone https://github.com/rtlsdrblog/rtl-sdr-blog.git
-
     - name: Compile Standalone Static Binary
       run: |
         cd rtl-sdr-blog
         mkdir build
         cd build
-        # We tell CMake to look for static libraries first and pull libusb in explicitly
         cmake ../ -DDETACH_KERNEL_DRIVER=ON -DCMAKE_FIND_LIBRARY_SUFFIXES=".a"
         
-        # Manually compile the static executable by targeting the static objects directly
+        # Build the static library dependencies first
+        make rtlsdr_static convenience_static
+        
+        # Now stitch it all together into a bulletproof static binary
         gcc -static -O2 -I../src -I../include \
           ../src/rtl_tcp.c \
           src/libconvenience_static.a \
           src/librtlsdr_static.a \
           -lusb-1.0 -lm \
           -o src/rtl_tcp
-
-    - name: Upload Compiled rtl_tcp Binary
-      uses: actions/upload-artifact@v4
-      with:
-        name: rtl_tcp_aarch64
-        path: rtl-sdr-blog/build/src/rtl_tcp
