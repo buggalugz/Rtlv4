@@ -10,25 +10,8 @@ jobs:
       image: alpine:3.18
 
     steps:
-    - name: Install Build Dependencies
+      - name: Install Build Dependencies
       run: |
         apk update
-        apk add git cmake make gcc g++ musl-dev libusb-dev libusb-static
+        apk add git cmake make gcc g++ musl-dev libusb-dev libusb-dev-static
 
-    - name: Clone Official RTL-SDR Blog V4 Source
-      run: |
-        git clone https://github.com/rtlsdrblog/rtl-sdr-blog.git
-
-    - name: Compile Binaries (Static Link)
-      run: |
-        cd rtl-sdr-blog
-        mkdir build
-        cd build
-        cmake ../ -DDETACH_KERNEL_DRIVER=ON -DCMAKE_EXE_LINKER_FLAGS="-static"
-        make rtl_tcp
-
-    - name: Upload Compiled rtl_tcp Binary
-      uses: actions/upload-artifact@v4
-      with:
-        name: rtl_tcp_aarch64
-        path: rtl-sdr-blog/build/src/rtl_tcp
