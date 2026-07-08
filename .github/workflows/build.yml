@@ -16,13 +16,21 @@ jobs:
     - name: Clone Official RTL-SDR Blog V4 Source
       run: git clone https://github.com/rtlsdrblog/rtl-sdr-blog.git
 
-    - name: Compile Binaries (Static Link)
+    - name: Compile Standalone Static Binary
       run: |
         cd rtl-sdr-blog
         mkdir build
         cd build
-        cmake ../ -DDETACH_KERNEL_DRIVER=ON -DCMAKE_EXE_LINKER_FLAGS="-static"
-        make rtl_tcp
+        # We tell CMake to look for static libraries first and pull libusb in explicitly
+        cmake ../ -DDETACH_KERNEL_DRIVER=ON -DCMAKE_FIND_LIBRARY_SUFFIXES=".a"
+        
+        # Manually compile the static executable by targeting the static objects directly
+        gcc -static -O2 -I../src -I../include \
+          ../src/rtl_tcp.c \
+          src/libconvenience_static.a \
+          src/librtlsdr_static.a \
+          -lusb-1.0 -lm \
+          -o src/rtl_tcp
 
     - name: Upload Compiled rtl_tcp Binary
       uses: actions/upload-artifact@v4
