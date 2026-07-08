@@ -1,0 +1,35 @@
+name: Build RTL-SDR V4 for aarch64 Musl
+
+on:
+  workflow_dispatch: # Allows you to manually click "Run" whenever you want a fresh build
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:3.18 # Uses the exact musl-libc environment matching your working binary
+
+    steps:
+    - name: Install Build Dependencies
+      run: |
+        apk update
+        apk add git cmake make gcc g++ musl-dev libusb-dev
+
+    - name: Clone Official RTL-SDR Blog V4 Source
+      run: |
+        git clone https://github.com/rtlsdrblog/rtl-sdr-blog.git
+        cd rtl-sdr-blog
+
+    - name: Compile Binaries
+      run: |
+        cd rtl-sdr-blog
+        mkdir build
+        cd build
+        cmake ../ -DDETACH_KERNEL_DRIVER=ON
+        make
+
+    - name: Upload Compiled rtl_tcp Binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: rtl_tcp_aarch64
+        path: rtl-sdr-blog/build/src/rtl_tcp
